@@ -1,0 +1,22 @@
+{
+  "status": "design-only; no trainer consumes this configuration yet",
+  "execution_enabled": false,
+  "initial_method": "supervised LoRA, subject to model/trainer compatibility validation",
+  "target_language_projection_suffixes": ["self_attn.q_proj", "self_attn.v_proj"],
+  "rank_candidate": 8,
+  "alpha_candidate": 16,
+  "freeze_vision_tower": true,
+  "freeze_projector": true,
+  "initial_positive_negative_ratio": "1:1 for pipeline testing, not an optimized training mixture",
+  "loss_scope": "assistant answer tokens only, using original multimodal processor/template",
+  "must_mask": ["system/user tokens", "image placeholders", "padding"],
+  "preflight": [
+    "verify actual trainable parameter names and count",
+    "finite loss and gradients on one positive and one negative",
+    "confirm visual features are injected during training",
+    "overfit a tiny training subset without touching held-out splits",
+    "save/reload adapter with matching predictions",
+    "validate adapter export/merge and fresh MLX conversion before any release"
+  ],
+  "resource_policy": "No cloud provisioning, paid run, weight upload or training is authorized by this file."
+}
