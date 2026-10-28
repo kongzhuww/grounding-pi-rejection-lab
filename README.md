@@ -1,5 +1,10 @@
 # GroundingPI Rejection Lab
 
+<p align="left">
+  <a href="https://github.com/kongzhuww/grounding-pi-rejection-lab/actions/workflows/ci.yml"><img src="https://github.com/kongzhuww/grounding-pi-rejection-lab/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
+</p>
+
 **English** | [简体中文](README_zh.md)
 
 **Independent, unofficial experiment repository. Preparation stage; no trained model

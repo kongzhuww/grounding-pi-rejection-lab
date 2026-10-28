@@ -1,5 +1,10 @@
 # GroundingPI 目标拒识实验室 (GroundingPI Rejection Lab)
 
+<p align="left">
+  <a href="https://github.com/kongzhuww/grounding-pi-rejection-lab/actions/workflows/ci.yml"><img src="https://github.com/kongzhuww/grounding-pi-rejection-lab/actions/workflows/ci.yml/badge.svg" alt="CI 状态"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
+</p>
+
 [English](README.md) | **简体中文**
 
 **独立非官方实验性研究仓库。目前处于实验准备阶段；尚未提供训练好的模型或经过完整验证的微调后端。**
