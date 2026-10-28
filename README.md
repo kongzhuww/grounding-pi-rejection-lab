@@ -1,5 +1,7 @@
 # GroundingPI Rejection Lab
 
+**English** | [简体中文](README_zh.md)
+
 **Independent, unofficial experiment repository. Preparation stage; no trained model
 or validated fine-tuning backend is provided yet.**
 
