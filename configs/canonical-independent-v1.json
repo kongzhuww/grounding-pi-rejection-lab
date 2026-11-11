@@ -1,0 +1,54 @@
+{
+  "recorded": "2026-10-28",
+  "status": "fixed before generating or evaluating new scenes; no post-result model/checkpoint/threshold selection",
+  "purpose": "One fixed-candidate fresh same-generator synthetic holdout, not natural-image, out-of-distribution or production acceptance",
+  "candidate": "outputs/mac-existence-canonical-cost1-001/checkpoints/step-0064",
+  "candidate_sha256": {
+    "head.safetensors": "619b91af049b7eee715b37c325b8459708f9d485704dfa50b852dffc0af66d25",
+    "head_config.json": "7c98580b88280180688f33eb6240bb9d14955376d2893c9e1d20aad6575aa980"
+  },
+  "frozen_computation_sha256": {
+    "existence.py": "4bfa6f3a3d03c996dab471f546245c4622123123f0ba811d2bb0ed87f731f4cf",
+    "gating.py": "a268b2b1896b7ba1426905c7c6214647cdc8eedec178cf43873923b703e2dfb0",
+    "metrics.py": "b8d304206db4453f7c1242af3431ce4a79fefda8bbb7ced391d10dc3a19a3301",
+    "data.py": "a0d640125321c90a31b9d53bea651a781d0610da665ae5c02d3bcf58bfbb9d86"
+  },
+  "runner_note": "Only add evaluation-role provenance and a fresh-role training prohibition; existence features, head, routing, metrics, data generator and original localization unchanged",
+  "feature_query": "canonical",
+  "feature_version": "frozen-final-canonical-existence-hidden-l2-v2",
+  "image_tokens": 64,
+  "decision": "fixed argmax, no threshold fit, equal costs in already-trained head; uncalibrated logits",
+  "shards": [
+    {"id": "independent-canonical-v1-shard01", "seed": 2026102801},
+    {"id": "independent-canonical-v1-shard02", "seed": 2026102802},
+    {"id": "independent-canonical-v1-shard03", "seed": 2026102803},
+    {"id": "independent-canonical-v1-shard04", "seed": 2026102804},
+    {"id": "independent-canonical-v1-shard05", "seed": 2026102805}
+  ],
+  "data_policy": "Each fixed seed generates 100 scenes using unchanged generator; evaluate only its fresh validation partition (10 images,40 questions). Generated train/test partitions are unused, not training sources. Original multiscene-dev-v1 test remains locked and uninferred.",
+  "total_evaluation_images": 50,
+  "total_evaluation_questions": 200,
+  "positive_questions": 100,
+  "negative_questions": 100,
+  "independent_units": "50 new images; positive and negative image/phrase decisions are paired within each image, each duplicated across point/box. Do not treat 200 questions as 200 independent images.",
+  "leakage_policy": "Before inference require all new image hashes disjoint from every old multiscene-dev-v1 partition and from other shards; fail without reseeding if collision. Namespace scene/question IDs by shard in combined metrics because generator-local IDs repeat across seeds.",
+  "locked_test_policy": "Record original test.jsonl SHA256 before and after; no model inference on original test or any new generated train/test partition",
+  "comparison": "same new inputs, frozen original localizer vs fixed external gate; keep all failures and all five shards",
+  "predeclared_research_screen": {
+    "no_added_positive_localization_failures_by_id": true,
+    "positive_false_rejection_max": 0,
+    "negative_correct_rejection_min": 90,
+    "invalid_max": 0,
+    "each_negative_kind_min_correct_rejection_rate": 0.8,
+    "require_all_three_negative_kinds_present": true,
+    "note": "A conservative research screen chosen before new data, not a statistical noninferiority test, business safety budget or deployment authorization"
+  },
+  "uncertainty": "Descriptive Wilson95 intervals for binary presence recall and absence specificity after collapsing identical point/box decisions; n=50 for each, assuming independent same-generator image draws. No binomial CI on 200 correlated question-level answers.",
+  "independent_recheck": "Re-run shard01 once in a separate process with the same head and compare every baseline, gate/logit and routed row. No retry/reselection on a poor score.",
+  "max_seconds_soft_per_process": 240,
+  "training_updates": 0,
+  "original_locked_test_inference": false,
+  "cloud": false,
+  "upload": false,
+  "deployment_accepted": false
+}

@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from .data import validate_dataset
-from .metrics import score
+from .metrics import grouped_score
 
 
 def normalize_result(result, phrase):
@@ -29,6 +29,10 @@ def main():
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--split", choices=["validation", "test"], default="validation")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--adapter", type=Path, help="Optional locally trained lab adapter directory"
+    )
+    parser.add_argument("--image-tokens", type=int, default=None)
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
@@ -55,8 +59,24 @@ def main():
         raise ValueError("model exceeds conservative MLX memory preflight")
     truth_path = args.dataset / f"{args.split}.jsonl"
     rows = [json.loads(line) for line in truth_path.read_text().splitlines()]
-    processor = Processor(args.model)
+    adapter_metadata = None
+    if args.adapter:
+        adapter_metadata = json.loads((args.adapter / "adapter_config.json").read_text())
+        if adapter_metadata["baseline_commit"] != commit:
+            raise ValueError("adapter/baseline code commit mismatch")
+        trained_budget = adapter_metadata["image_token_budget"]
+        if args.image_tokens is not None and args.image_tokens != trained_budget:
+            raise ValueError("adapter evaluation must use the trained image-token budget")
+        args.image_tokens = trained_budget
+    processor = Processor(args.model, max_output_tokens=args.image_tokens)
     model, config = load_model(args.model)
+    if args.adapter:
+        from .training import attach_lora, load_adapter, model_fingerprint
+
+        lora = adapter_metadata["lora"]
+        attach_lora(model, layers=lora["layers"], rank=lora["rank"], scale=lora["scale"])
+        load_adapter(model, args.adapter, expected_fingerprint=model_fingerprint(args.model))
+    model.eval()
     args.output.mkdir(parents=True)
     predictions = []
     with (args.output / "predictions.jsonl").open("x") as stream:
@@ -83,8 +103,10 @@ def main():
             predictions.append(pred)
             stream.write(json.dumps(pred) + "\n")
             stream.flush()
-    report = score(rows, predictions)
+    report = grouped_score(rows, predictions)
     report["baseline_commit"] = commit
+    report["adapter"] = adapter_metadata
+    report["image_token_budget"] = args.image_tokens
     report["split"] = args.split
     report["dataset_manifest"] = json.loads((args.dataset / "manifest.json").read_text())
     report["model_conversion"] = json.loads((args.model / "conversion.json").read_text())

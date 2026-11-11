@@ -4,7 +4,7 @@ import pytest
 
 from rejection_lab.baseline import normalize_result
 from rejection_lab.data import build_dataset
-from rejection_lab.metrics import score, valid_prediction
+from rejection_lab.metrics import grouped_score, score, valid_prediction
 
 
 @pytest.fixture
@@ -23,6 +23,19 @@ def test_perfect_prediction_scorer_unit_check_not_model_result(rows):
     assert result["correct_rejection_rate"] == 1
     assert result["positive_localization_success_rate"] == 1
     assert result["negative_failure_rate_including_invalid"] == 0
+
+
+def test_grouped_scores_preserve_task_and_negative_counts(rows):
+    predictions = [
+        {"id": r["id"], "valid": True, "coordinates": r["target_coordinates"]} for r in rows
+    ]
+    result = grouped_score(rows, predictions)
+    assert set(result["by_task"]) == {"point", "bbox"}
+    assert all(group["counts"]["positive"] == 1 for group in result["by_task"].values())
+    assert sum(group["counts"]["negative"] for group in result["negative_by_kind"].values()) == 2
+    assert all(
+        group["correct_rejection_rate"] == 1 for group in result["negative_by_kind"].values()
+    )
 
 
 def test_always_none_is_not_success(rows):

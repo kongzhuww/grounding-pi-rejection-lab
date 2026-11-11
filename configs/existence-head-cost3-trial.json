@@ -1,0 +1,45 @@
+{
+  "status": "follow-up preregistration after inspecting cost1, before cost3 execution; documentation only",
+  "architecture": "frozen original 4-bit localizer + independent FP32 linear binary existence head",
+  "feature": "L2-normalized final hidden vector at last input-prompt position, image and query only, stop-gradient",
+  "feature_dim": 2560,
+  "feature_version": "frozen-final-prompt-hidden-l2-v1",
+  "head_parameters": 5122,
+  "classes": [
+    "absent",
+    "present"
+  ],
+  "initialization": "all head weights/biases zero; exact argmax tie selects absent",
+  "objective": "sum(class_weight * per-example CE) / sum(class_weight) + 0.5 * 0.01 * sum(weight squared); bias unpenalized",
+  "regularization": 0.01,
+  "optimizer": "Adam, learning rate 0.05, full batch of 32 training questions",
+  "updates": 128,
+  "label_presentations": 4096,
+  "checkpoints": [
+    32,
+    64,
+    128
+  ],
+  "seed": 42,
+  "train_scenes": 8,
+  "train_questions": 32,
+  "dataset": "multiscene-dev-v1, generation seed 2025",
+  "validation_scenes": 10,
+  "validation_questions": 40,
+  "image_tokens": 64,
+  "routing": "argmax, no calibrated confidence or validation-tuned threshold; absent renders explicit GAM None; present retains exact frozen-localizer response including any invalid output",
+  "evaluation": "generate all 40 baseline outputs once as control, then replay independent head routes; no inference-latency-saving claim",
+  "development_screen": {
+    "positive_localization_min": 19,
+    "negative_false_positive_max_exclusive": 20,
+    "invalid_max": 0
+  },
+  "soft_wall_seconds": 240,
+  "test_inference": false,
+  "cloud": false,
+  "upload": false,
+  "note": "Different architecture and optimization budget from LoRA, not a single-variable LoRA ablation or final benchmark. Reused synthetic development only; no ground-truth answers in features; no validation fit/normalization statistics.",
+  "positive_weight": 3,
+  "negative_weight": 1,
+  "hypothesis": "Reduce false rejection by fixed positive cost3; same frozen features, data, regularization, initialization, optimizer and argmax routing; no validation-threshold search"
+}

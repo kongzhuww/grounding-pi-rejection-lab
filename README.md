@@ -7,8 +7,13 @@
 
 **English** | [简体中文](README_zh.md)
 
-**Independent, unofficial experiment repository. Preparation stage; no trained model
-or validated fine-tuning backend is provided yet.**
+**Independent, unofficial experiment repository. Bounded Mac-native LoRA and a separate
+existence-head experiment run locally, but no natural-image or production-ready
+rejection fix is claimed. A fixed canonical-query gate now passes a preregistered
+fresh same-generator synthetic screen: 50 new images / 200 paired questions, preserving
+98/100 positive localizations and rejecting 100/100 negatives. This is not distribution-
+shift validation or deployment acceptance. Trained adapters/heads stay local and are
+not distributed here.**
 
 Goal: improve **missing-target rejection** without sacrificing localization when a
 target really exists. Keep the runnable [MLX baseline](https://github.com/kongzhuww/mlx-grounding-pi)
@@ -31,15 +36,56 @@ The lab investigates this behavior; it does not silently alter the baseline.
   output and negative failures including invalid responses.
 - Optional local MLX evaluation through a trusted baseline checkout, loading a
   local model once; no remote inference or cloud provisioning.
-- 16 passing unit tests for the data protocol and degenerate predictors.
+- 62 passing local tests, including evaluation-only fresh-holdout role enforcement,
+  canonical task-independent queries, feature-version
+  isolation and legacy loading, frozen image/query features, independent head
+  training/reloading and explicit routing, masked-KL/teacher detachment, exact zero-KL
+  objective/gradient equivalence, positive-loss/gradient scaling, default weighting,
+  scene selection/epoch coverage, grouped metrics,
+  and optional MLX quantized multimodal autodiff,
+  frozen weights, answer-only loss, image conditioning and adapter roundtrip.
 - A completed [untrained local validation smoke](docs/initial-smoke.md): two positive
   questions pass and two negative questions fail, all concerning one scene. This is
   pipeline evidence, not a fine-tuning gain or an accuracy estimate.
 
-**Not implemented:** optimizer/training loop, LoRA attachment, gradient checks,
-adapter export/merge or fine-tuning improvements. `configs/lora-plan.json` is a
-proposal, not an executable training configuration. A text-only `mlx_lm` training
-command is not assumed to support this custom multimodal architecture.
+- **Real local training:** last-two-layer q/v LoRA on a frozen 4-bit base,
+  answer/EOS-only loss, multi-scene selection, seeded epoch shuffling and adapter-only
+  saving. Fresh-process reload reproduces validation outputs. See
+  [Mac training](docs/mac-training.md).
+- **Documented unsuccessful multi-scene trial:** 8 training scenes, 64 updates,
+  10 validation scenes. Negative false positives fell from 20/20 to 0/20, but positive
+  localization fell from 19/20 to 3/20. See [the retained failure](docs/multiscene-development.md).
+- **Positive-weight ablation:** weight 3 with 16/32/48/64-step checkpoints. No checkpoint
+  passes the fixed development screen; early checkpoints produce malformed negative
+  outputs and later ones over-refuse. See [the complete curve](docs/positive-weight-development.md).
+- **Two distillation ablations:** intermediate positive preservation improves, but no
+  checkpoint passes the unchanged joint screen. Positive-only KL at step32 localizes
+  20/20 positives and rejects 8/20 negatives, with 9 false positives and 3 invalids.
+  See [both full curves and the teacher-conflict diagnostic](docs/distillation-development.md).
+
+- **Initial task-specific frozen-localizer existence gate:** 5,122-parameter binary head with positive cost3,
+  step32: retains original positive localization 19/20, correctly rejects 5/20 negatives,
+  no added false rejection or invalid output. Still **15/20 false positives**, with
+  **0/10 point negatives rejected**. This passes only the permissive development screen,
+  not deployment acceptance. See [the complete cost1/cost3 experiment](docs/existence-head-development.md).
+- **Task-independent existence query:** canonical input with equal class costs at
+  steps64/128 preserves positive localization19/20, rejects20/20 negatives, and has
+  zero false rejection/invalids. Point negatives10/10 and attribute-combination4/4
+  pass on this same small reused development split. Cost3 rejects nothing; cost1/step32
+  wrongly rejects every real target. All six checkpoints were independently reloaded;
+  see [the full follow-up and its limits](docs/canonical-existence-development.md).
+
+- **Fixed-candidate fresh synthetic holdout:** five predeclared seeds,50 new images,
+  200 paired questions. Original localization98/100 preserved, negatives100/100
+  correctly rejected, zero false rejection/invalids. Candidate and thresholds were
+  fixed before data generation; the original locked test remains uninferred. Only
+  two scenes cover missing attribute combinations; this is same-generator evidence,
+  not natural-photo or OOD acceptance. See [plan, complete results and recheck](docs/independent-synthetic-evaluation.md).
+
+**Not yet validated:** natural-image/OOD rejection improvements, broad-data training, resumed optimizer
+state, adapter merging or full-model deployment after merging. `configs/lora-plan.json`
+remains a broader proposal, not an executable training configuration. The implemented
+Mac smoke has its own bounded CLI; it does not reuse a text-only trainer unchanged.
 
 ## Local data preparation
 
@@ -107,16 +153,37 @@ These thresholds are development choices, not official benchmark settings.
 An always-`None` predictor gets perfect rejection but zero positive localization;
 invalid-only output cannot pass negative-failure evaluation.
 
-## Next steps before training
+## Mac training and next steps
 
-1. Establish a baseline on scene-disjoint positive/negative samples.
-2. Add human-checked real photographs with rights/provenance and harder counterexamples.
-3. Validate the original multimodal training path and frozen vision/projector LoRA
-   gradient flow; inspect token loss masks and actual trainable parameters.
-4. Run a tiny overfit/reload check, then a controlled validation comparison.
-5. Only after compatibility and budget approval, scale training and evaluate a locked test set.
+The first real local run completed: mean training loss **2.726 → 2.214** in eight
+updates, about **13.27 seconds** including setup/checks/evaluation, with **3.70 GB**
+peak MLX allocation (not process RSS). Two negative validation questions still fail;
+this is compatibility evidence, **not a successful rejection fix**. The four validation
+questions share one scene, and the four training questions share a different scene.
 
-See [experiment protocol](docs/experiment-plan.md). No paid training has been started.
+Follow the [Mac training commands and limitations](docs/mac-training.md) to reproduce.
+The subsequent [multi-scene development trial](docs/multiscene-development.md) confirms
+that training loss and negative FPR alone are unsafe objectives: the adapter over-refused
+present objects and was not accepted. No cloud or paid training has been started.
+A subsequent [positive-weight/checkpoint trial](docs/positive-weight-development.md)
+found no acceptable checkpoint either. Subsequent
+[distillation ablations](docs/distillation-development.md) show partial intermediate
+positive preservation, but protocol errors and late over-refusal still prevent
+acceptance. Negative teacher suffixes are themselves unreliable; removing their KL
+improves protocol counts without solving the task. The subsequent
+[separate existence-head experiment](docs/existence-head-development.md) preserves the
+original localization weights and passes the weak development screen at cost3, but
+rejection coverage is small and point/attribute-combination failures remain in that
+initial task-specific trial. The [canonical-query follow-up](docs/canonical-existence-development.md)
+now passes those subgroups on reused synthetic development with cost1, while retaining
+its failed cost3 run and all-absent early checkpoint. Broader training data and new
+independent evaluation remain necessary, not another blind step increase. A later
+[fixed-candidate same-generator holdout](docs/independent-synthetic-evaluation.md)
+now preserves98/100 positive localization and rejects100/100 negatives on50 new images.
+It leaves the old locked test untouched; broader distribution-shift and natural-image
+validation and application-specific acceptance are still required.
+
+See [experiment protocol](docs/experiment-plan.md).
 No credentials, model weights, personal photos or generated datasets are published here.
 
 ## License

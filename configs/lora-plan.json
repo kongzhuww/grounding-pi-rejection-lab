@@ -1,5 +1,5 @@
 {
-  "status": "design-only; no trainer consumes this configuration yet",
+  "status": "broader proposal; not consumed by a trainer. See docs/mac-training.md for the implemented bounded local CLI",
   "execution_enabled": false,
   "initial_method": "supervised LoRA, subject to model/trainer compatibility validation",
   "target_language_projection_suffixes": ["self_attn.q_proj", "self_attn.v_proj"],

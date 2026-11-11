@@ -39,7 +39,10 @@ a new independent final holdout and label the old set as development data.
 
 ## Training compatibility gate
 
-No training code is shipped yet. Before building a real recipe, verify:
+The bounded Mac-native path now passes quantized multimodal gradient, answer-mask
+and adapter-reload checks; see [the actual run](mac-training.md). Eight optimizer
+updates are not an overfit-convergence or generalization demonstration. The broader
+training/merge gates below remain requirements, not claims that all are complete:
 
 1. GroundingPI's original multimodal processor/template creates matching image slots.
 2. Labels supervise only assistant answer tokens; image/user/padding positions use

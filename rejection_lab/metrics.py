@@ -93,6 +93,27 @@ def score(rows, predictions, *, point_tolerance_pixels=15.0, minimum_iou=0.70):
     }
 
 
+def grouped_score(rows, predictions):
+    """Keep pooled rates plus task/difficulty counts; small strata are not benchmarks."""
+    result = score(rows, predictions)
+    by_id = {prediction["id"]: prediction for prediction in predictions}
+    result["by_task"] = {}
+    for task in sorted({row["task"] for row in rows}):
+        selected = [row for row in rows if row["task"] == task]
+        result["by_task"][task] = score(selected, [by_id[row["id"]] for row in selected])
+    result["negative_by_kind"] = {}
+    for kind in sorted(
+        {row.get("negative_kind") or "unspecified" for row in rows if not row["present"]}
+    ):
+        selected = [
+            row
+            for row in rows
+            if not row["present"] and (row.get("negative_kind") or "unspecified") == kind
+        ]
+        result["negative_by_kind"][kind] = score(selected, [by_id[row["id"]] for row in selected])
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--truth", type=Path, required=True, help="A single split JSONL")
@@ -101,7 +122,7 @@ def main():
     args = parser.parse_args()
     rows = [json.loads(line) for line in args.truth.read_text().splitlines()]
     predictions = [json.loads(line) for line in args.predictions.read_text().splitlines()]
-    report = score(rows, predictions)
+    report = grouped_score(rows, predictions)
     with args.output.open("x") as stream:
         stream.write(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))

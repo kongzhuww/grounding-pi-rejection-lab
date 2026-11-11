@@ -4,6 +4,8 @@
   "checkpoint": "GroundingPI/GroundingPI",
   "checkpoint_revision": "08d397c8769f7f10b96ff6d56ee6f56acb04181f",
   "starting_variant": "language-only 8-bit, BF16 vision/projector",
-  "status": "unmodified inference baseline; no trained adapter",
+  "status": "unmodified inference baseline; experimental adapters tracked separately",
+  "local_smoke_training_variant": "4-bit language base, frozen BF16 vision, last-two-layer q/v LoRA",
+  "adapter_publication": "none; experimental trained weights remain local",
   "notes": "8-bit is an evaluation starting point, not a validated fine-tuning backend. Training should separately verify unquantized or supported quantized VLM LoRA."
 }
